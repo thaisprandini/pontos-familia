@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Pontos 🌸🎮"/>
+<title>Pontos da Família</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+body{font-family:'Nunito',sans-serif;overscroll-behavior:none;background:#fce4ec;min-height:100vh;}
+::-webkit-scrollbar{display:none;}
+input,button,textarea{font-family:'Nunito',sans-serif;}
+button{cursor:pointer;}
+
+/* animations */
+@keyframes pop{0%{transform:scale(.4);opacity:0}65%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes slideDown{0%{transform:translateY(-80px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.floating{animation:float 3s ease-in-out infinite;}
+.bouncing{animation:bounce 2s ease infinite;}
+.card-btn{transition:transform .12s;}
+.card-btn:active{transform:scale(.96);}
+
+/* overlay */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;animation:fadeIn .2s;}
+.overlay.bottom{align-items:flex-end;}
+.modal{background:#fff;border-radius:24px;padding:28px;width:min(300px,90vw);text-align:center;box-shadow:0 16px 60px rgba(0,0,0,.35);}
+.bottom-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding-bottom:24px;animation:slideDown .25s;}
+
+/* tab bar */
+.tab-bar{display:flex;gap:6px;padding:10px 10px 0;overflow-x:auto;}
+.tab-btn{flex-shrink:0;padding:8px 13px;border-radius:12px;border:none;font-weight:800;font-size:12px;transition:all .18s;}
+
+/* task item */
+.task-item{display:flex;align-items:center;gap:11px;border-radius:14px;padding:11px 13px;border:none;text-align:left;width:100%;margin-bottom:7px;transition:transform .12s,box-shadow .12s;}
+.task-item:active{transform:scale(.97);}
+
+/* progress bar */
+.progress-bar{background:rgba(255,255,255,.22);border-radius:999px;height:8px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:999px;transition:width .5s ease;}
+
+/* chart bar */
+.chart-bar{flex:0 0 auto;width:22px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}
+.chart-fill{width:100%;border-radius:4px 4px 0 0;transition:height .4s ease;}
+
+/* celebration */
+.celebration{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.celebration-box{border-radius:24px;padding:22px 40px;text-align:center;animation:pop .4s ease-out;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+
+/* inputs */
+.inp{width:100%;padding:10px 13px;border-radius:11px;border:1.5px solid #e0c4f0;font-size:13px;font-weight:700;color:#333;background:#faf5ff;outline:none;}
+.inp:focus{border-color:#c44dff;}
+.inp-dark{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:#fff;}
+.inp-dark::placeholder{color:rgba(255,255,255,.3);}
+.inp-dark:focus{border-color:rgba(255,255,255,.4);}
+
+/* btn-primary */
+.btn-pri{width:100%;padding:12px;border-radius:12px;border:none;font-weight:900;font-size:14px;color:#fff;cursor:pointer;transition:opacity .15s;}
+.btn-pri:active{opacity:.85;}
+
+/* pin dots */
+.pin-dots{display:flex;justify-content:center;gap:12px;margin:18px 0;}
+.pin-dot{width:14px;height:14px;border-radius:999px;border:2px solid #c44dff;background:transparent;transition:all .18s;}
+.pin-dot.filled{background:#c44dff;}
+.pin-dot.error{border-color:#e94560;background:#e94560;}
+
+/* keypad */
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.keypad-btn{height:50px;border-radius:12px;border:none;font-weight:900;font-size:18px;background:#f3e5f5;color:#333;transition:transform .1s;}
+.keypad-btn:active{transform:scale(.93);}
+.keypad-btn.empty{background:transparent;cursor:default;}
+
+/* admin list item */
+.admin-item{display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:9px 12px;margin-bottom:6px;}
+.del-btn{background:#ffe0e0;border:none;border-radius:7px;padding:4px 9px;font-weight:800;font-size:12px;color:#e94560;}
+
+/* history item */
+.hist-item{display:flex;align-items:center;gap:10px;border-radius:12px;padding:10px 12px;margin-bottom:6px;cursor:pointer;border:none;text-align:left;width:100%;transition:transform .12s;}
+.hist-item:active{transform:scale(.97);}
+
+/* week dot */
+.week-dot{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const S = {
+  get:(k,d)=>{ try{ const v=localStorage.getItem(k); return v!==null?JSON.parse(v):d; }catch(e){ return d; } },
+  set:(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function todayKey(){ return new Date().toISOString().split("T")[0]; }
+function fmtDate(k){ const [,m,d]=k.split("-"); return d+"/"+m; }
+function getLast30(){
+  return Array.from({length:30},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-29+i);
+    return d.toISOString().split("T")[0];
+  });
+}
+function getWeekDays(){
+  const d=new Date();
+  return Array.from({length:7},(_,i)=>{
+    const dt=new Date(d); dt.setDate(d.getDate()-d.getDay()+i);
+    return{label:["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][i],key:dt.toISOString().split("T")[0]};
+  });
+}
+function calcDay(dc,acts){
+  const done=acts.filter(a=>dc&&dc[a.id]).length;
+  const bonus=done===acts.length&&done>0?Math.round(done*0.3):0;
+  return{base:done,bonus,total:done+bonus};
+}
+function el(id){ return document.getElementById(id); }
+function qs(sel,ctx){ return (ctx||document).querySelector(sel); }
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const SOPHIA_ACTS_DEFAULT=[
+  {id:"carro",emoji:"🚗",label:"No carro até 6:45"},
+  {id:"coisas",emoji:"🎒",label:"Usar só suas coisas"},
+  {id:"licao",emoji:"📚",label:"Lição de casa até 8:30"},
+  {id:"banho",emoji:"🚿",label:"Banho até 8:30"},
+  {id:"ocorrencia",emoji:"📋",label:"Não levar ocorrências"},
+  {id:"piano",emoji:"🎹",label:"30 min de piano"},
+  {id:"bagunca",emoji:"🧹",label:"Arrumar o que bagunçou"},
+  {id:"duolingo",emoji:"🦉",label:"30 min de Duolingo"},
+  {id:"brigar",emoji:"🕊️",label:"Não brigar"},
+  {id:"alimentacao",emoji:"🥗",label:"Alimentação boa"},
+  {id:"dormir",emoji:"😴",label:"Dormir até 21:30"},
+  {id:"dentes",emoji:"🦷",label:"Escovar os dentes"},
+  {id:"coisa_nova",emoji:"🌟",label:"Fazer, aprender ou experimentar algo novo"},
+];
+const SOPHIA_REWARDS_DEFAULT=[
+  {id:1,emoji:"📱",label:"Tempo de tela (3 horas)",cost:100},
+  {id:2,emoji:"🎲",label:"Escolher atividade em família",cost:100},
+  {id:3,emoji:"👛",label:"Carteirinha azul",cost:1000},
+];
+const SOPHIA_AVATARS=[
+  {id:"seed",emoji:"🌱",label:"Sementinha",min:0},
+  {id:"flower",emoji:"🌸",label:"Florzinha",min:50},
+  {id:"star",emoji:"⭐",label:"Estrelinha",min:150},
+  {id:"princess",emoji:"👸",label:"Princesa",min:300},
+  {id:"astronaut",emoji:"🚀",label:"Astronauta",min:600},
+  {id:"queen",emoji:"👑",label:"Rainha",min:1000},
+];
+
+const RAPH_ACTS_DEFAULT=[
+  {id:"carro",emoji:"🚗",label:"No carro até 6:45"},
+  {id:"banho",emoji:"🚿",label:"Banho até 8:30"},
+  {id:"licao",emoji:"📚",label:"Lição de casa"},
+  {id:"piano",emoji:"🎹",label:"30 min de piano"},
+  {id:"duolingo",emoji:"🦉",label:"30 min de Duolingo"},
+  {id:"bagunca",emoji:"🧹",label:"Arrumar o que bagunçou"},
+  {id:"alimentacao",emoji:"🥗",label:"Alimentação saudável"},
+  {id:"brigar",emoji:"🕊️",label:"Não brigar"},
+  {id:"dormir",emoji:"😴",label:"Dormir até 21:30"},
+  {id:"coisas",emoji:"🎒",label:"Usar só suas coisas"},
+  {id:"dentes",emoji:"🦷",label:"Escovar os dentes"},
+  {id:"coisa_nova",emoji:"🌟",label:"Fazer, aprender ou experimentar algo novo"},
+];
+const RAPH_REWARDS_DEFAULT=[
+  {id:1,emoji:"🎮",label:"Tempo de tela extra (2h)",cost:80},
+  {id:2,emoji:"🕹️",label:"Escolher o game do fim de semana",cost:60},
+  {id:3,emoji:"🎮",label:"Visita à Epic Games",cost:300},
+];
+const RAPH_AVATARS=[
+  {id:"rookie",emoji:"🧒",label:"Novato",min:0},
+  {id:"player",emoji:"🎮",label:"Player",min:50},
+  {id:"warrior",emoji:"⚔️",label:"Guerreiro",min:150},
+  {id:"hero",emoji:"🦸",label:"Herói",min:300},
+  {id:"legend",emoji:"🏆",label:"Lenda",min:600},
+  {id:"champion",emoji:"👑",label:"Campeão",min:1000},
+];
+
+const BONUS_POOL=[
+  {emoji:"🧺",label:"Dobrar a roupa",pts:3},
+  {emoji:"💧",label:"Beber 6 copos de água",pts:2},
+  {emoji:"📖",label:"Ler por 20 minutos",pts:3},
+  {emoji:"🐕",label:"Brincar com o pet",pts:2},
+  {emoji:"🧽",label:"Limpar a pia do banheiro",pts:3},
+  {emoji:"🎨",label:"Desenhar algo criativo",pts:2},
+  {emoji:"🤝",label:"Ajudar alguém em casa",pts:2},
+];
+
+// ─── APP STATE ─────────────────────────────────────────────────────────────────
+let state = {
+  child: "sophia",   // sophia | raphael
+  tab: "hoje",
+  selDate: todayKey(),
+  unlocked: false,
+
+  // sophia
+  soph_acts: S.get("soph_acts", SOPHIA_ACTS_DEFAULT),
+  soph_rewards: S.get("soph_rews", SOPHIA_REWARDS_DEFAULT),
+  soph_completed: S.get("soph_c", {}),
+  soph_total: S.get("soph_tp", 0),
+  soph_redeemed: S.get("soph_r", []),
+  soph_bonus: S.get("soph_bt", {}),
+  soph_msg: S.get("soph_msg", ""),
+
+  // raphael
+  raph_acts: S.get("raph_acts", RAPH_ACTS_DEFAULT),
+  raph_rewards: S.get("raph_rews", RAPH_REWARDS_DEFAULT),
+  raph_completed: S.get("raph_c", {}),
+  raph_total: S.get("raph_tp", 0),
+  raph_redeemed: S.get("raph_r", []),
+  raph_bonus: S.get("raph_bt", {}),
+  raph_msg: S.get("raph_msg", ""),
+};
+
+function save(){
+  S.set("soph_acts",state.soph_acts);
+  S.set("soph_rews",state.soph_rewards);
+  S.set("soph_c",state.soph_completed);
+  S.set("soph_tp",state.soph_total);
+  S.set("soph_r",state.soph_redeemed);
+  S.set("soph_bt",state.soph_bonus);
+  S.set("soph_msg",state.soph_msg);
+  S.set("raph_acts",state.raph_acts);
+  S.set("raph_rews",state.raph_rewards);
+  S.set("raph_c",state.raph_completed);
+  S.set("raph_tp",state.raph_total);
+  S.set("raph_r",state.raph_redeemed);
+  S.set("raph_bt",state.raph_bonus);
+  S.set("raph_msg",state.raph_msg);
+}
+
+// ─── GETTERS ──────────────────────────────────────────────────────────────────
+function k(){ return state.child==="sophia"?"soph":"raph"; }
+function acts(){ return state[k()+"_acts"]; }
+function rewards(){ return state[k()+"_rewards"]; }
+function completed(){ return state[k()+"_completed"]; }
+function total(){ return state[k()+"_total"]; }
+function bonusTasks(){ return state[k()+"_bonus"]; }
+function msg(){ return state[k()+"_msg"]; }
+function avatars(){ return state.child==="sophia"?SOPHIA_AVATARS:RAPH_AVATARS; }
+function isSophia(){ return state.child==="sophia"; }
+function accent(){ return isSophia()?"#c44dff":"#e94560"; }
+function accentGrad(){ return isSophia()?"linear-gradient(135deg,#ff6b9d,#c44dff)":"linear-gradient(135deg,#e94560,#0f3460)"; }
+function positiveGrad(){ return "linear-gradient(135deg,#43e97b,#38f9d7)"; }
+function bgPage(){ return isSophia()?"linear-gradient(135deg,#fce4ec,#f3e5f5,#e8eaf6)":"linear-gradient(135deg,#0f0c29,#302b63,#24243e)"; }
+function cardBg(){ return isSophia()?"rgba(255,255,255,.88)":"rgba(255,255,255,.06)"; }
+function txtColor(){ return isSophia()?"#333":"#fff"; }
+function txtSub(){ return isSophia()?"#888":"rgba(255,255,255,.45)"; }
+function sectionBg(){ return isSophia()?"rgba(255,255,255,.85)":"rgba(255,255,255,.06)"; }
+function currentAvatar(){
+  const tp=total();
+  return avatars().slice().reverse().find(a=>tp>=a.min)||avatars()[0];
+}
+function nextAvatar(){
+  return avatars().find(a=>a.min>total())||null;
+}
+function selDC(){ return completed()[state.selDate]||{}; }
+function selCalc(){ return calcDay(selDC(),acts()); }
+function selCount(){ return acts().filter(a=>selDC()[a.id]).length; }
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render(){
+  document.body.style.background = bgPage();
+  el("app").innerHTML = buildApp();
+  attachEvents();
+}
+
+function buildApp(){
+  const isToday = state.selDate === todayKey();
+  const av = currentAvatar();
+  const nxt = nextAvatar();
+  const tp = total();
+  const sc = selCount();
+  const calc = selCalc();
+  const S2 = isSophia();
+
+  const tabLabels = {hoje:`${S2?"📅":"🎮"} Hoje`,semana:"📊 Semana",historico:"📈 Histórico",premios:"🎁 Prêmios"};
+
+  return `
+  <!-- top switcher -->
+  <div style="display:flex;justify-content:center;gap:10px;padding:12px 16px;background:${accentGrad()};position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.2);">
+    <button onclick="switchChild('sophia')" style="padding:7px 20px;border-radius:50px;border:none;font-weight:900;font-size:13px;background:${!S2?"rgba(255,255,255,.18)":"rgba(255,255,255,.95)"};color:${!S2?"#fff":"#c44dff"};">🌸 Sophia</button>
+    <button onclick="switchChild('raphael')" style="padding:7px 20px;border-radius:50px;border:none;font-weight:900;font-size:13px;background:${S2?"rgba(255,255,255,.18)":"rgba(255,255,255,.95)"};color:${S2?"#fff":"#e94560"};">🎮 Raphael</button>
+    <button onclick="toggleLock()" style="padding:7px 14px;border-radius:50px;border:none;font-weight:900;font-size:14px;background:rgba(255,255,255,.18);color:#fff;">${state.unlocked?"🔓":"🔒"}</button>
+  </div>
+
+  <!-- header -->
+  <div style="background:${accentGrad()};padding:18px 16px 16px;box-shadow:0 4px 24px ${S2?"rgba(196,77,255,.35)":"rgba(233,69,96,.4)"};">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="floating" style="font-size:46px;">${av.emoji}</div>
+      <div style="text-align:center;flex:1;">
+        <h1 style="color:#fff;font-size:22px;font-weight:900;margin:0 0 2px;">${S2?"Sophia ⭐":"Raphael 🎮"}</h1>
+        <div style="color:rgba(255,255,255,.8);font-size:11px;font-weight:800;">${av.label}</div>
+        ${nxt?`<div style="color:rgba(255,255,255,.55);font-size:10px;font-weight:600;">${nxt.min-tp} pts para ${nxt.label} ${nxt.emoji}</div>`:""}
+      </div>
+      <button onclick="openAdmin()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;color:#fff;padding:6px 10px;font-weight:800;font-size:11px;">⚙️ Admin</button>
+    </div>
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.18);border-radius:50px;padding:6px 22px;backdrop-filter:blur(8px);margin-bottom:10px;">
+      <span style="font-size:18px;">⭐</span>
+      <span style="color:${S2?"#fff":"#ffd200"};font-size:26px;font-weight:900;">${tp}</span>
+      <span style="color:rgba(255,255,255,.65);font-size:12px;font-weight:700;">pontos</span>
+    </div>
+    <button onclick="openDatePicker()" style="display:block;width:100%;margin-bottom:8px;padding:7px 12px;border-radius:10px;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font-weight:800;font-size:12px;text-align:center;">
+      ${isToday?"📅 Hoje":("📅 "+fmtDate(state.selDate)+" — toque para mudar")}
+    </button>
+    <div style="padding:0 2px;">
+      <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.8);font-size:11px;font-weight:700;margin-bottom:3px;">
+        <span>${sc}/${acts().length} tarefas</span>
+        ${sc===acts().length?`<span>${S2?"🎉":"🔥"} Tudo feito!</span>`:""}
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${acts().length>0?(sc/acts().length*100):0}%;background:${sc===acts().length?"#fff":positiveGrad()};"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div class="tab-bar">
+    ${Object.entries(tabLabels).map(([id,lbl])=>`
+      <button class="tab-btn" onclick="switchTab('${id}')" style="background:${state.tab===id?accentGrad():"rgba(255,255,255,.7)"};color:${state.tab===id?"#fff":"#999"};">${lbl}</button>
+    `).join("")}
+  </div>
+
+  <!-- content -->
+  <div style="padding:12px;padding-bottom:40px;">
+    ${state.tab==="hoje"?buildToday():""}
+    ${state.tab==="semana"?buildWeek():""}
+    ${state.tab==="historico"?buildHistory():""}
+    ${state.tab==="premios"?buildPremios():""}
+  </div>
+  `;
+}
+
+function buildToday(){
+  const dc = selDC();
+  const calc = selCalc();
+  const sc = selCount();
+  const S2 = isSophia();
+  const todayBonus = bonusTasks()[state.selDate]||null;
+
+  return `
+  <!-- mensagem -->
+  <div style="background:${S2?"rgba(255,255,255,.85)":"rgba(255,255,255,.06)"};border-radius:14px;padding:11px 14px;margin-bottom:10px;border:${S2?"1px solid #f8bbd0":"1px solid rgba(233,69,96,.25)"};">
+    <div style="font-size:11px;font-weight:800;color:${accent()};margin-bottom:4px;">💌 Recado da mamãe</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;font-size:13px;font-weight:700;color:${msg()?txtColor():txtSub()};font-style:${msg()?"normal":"italic"};">${msg()||"Nenhum recado ainda..."}</div>
+      <button onclick="editMsg()" style="background:none;border:none;font-size:16px;padding:2px;">✏️</button>
+    </div>
+  </div>
+
+  <!-- resumo pontos -->
+  <div style="display:flex;gap:7px;margin-bottom:10px;">
+    ${[["Base",calc.base,txtColor()],["Bônus 30%",calc.bonus>0?"+"+calc.bonus:"—",calc.bonus>0?(S2?"#ff6b35":"#ffd200"):txtSub()],["Total",calc.total,"#2ecc71"]].map(([l,v,c])=>`
+      <div style="flex:1;background:${sectionBg()};border-radius:12px;padding:8px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;color:${txtSub()};">${l}</div>
+        <div style="font-size:19px;font-weight:900;color:${c};">${v}</div>
+      </div>
+    `).join("")}
+  </div>
+
+  ${sc===acts().length?`
+  <div class="bouncing" style="background:${positiveGrad()};border-radius:14px;padding:11px 16px;margin-bottom:10px;text-align:center;">
+    <div style="font-weight:900;font-size:14px;color:#fff;">${S2?"🎉 Mandou bem, Sophia!":"🔥 Mandou bem, Raphael!"}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.9);font-weight:700;">+30% bônus = +${calc.bonus} pontos extras!</div>
+  </div>`:""}
+
+  <!-- tarefas -->
+  ${acts().map(act=>{
+    const done=!!dc[act.id];
+    return `
+    <button class="task-item card-btn" onclick="toggleAct('${act.id}')"
+      style="background:${done?(S2?"linear-gradient(135deg,#fce4ec,#f3e5f5)":"rgba(56,239,125,.07)"):cardBg()};border:${done?(S2?"2px solid #c44dff":"1px solid #38ef7d"):(S2?"1px solid rgba(196,77,255,.1)":"1px solid rgba(255,255,255,.05)")};">
+      <div style="width:40px;height:40px;border-radius:12px;flex-shrink:0;background:${done?accentGrad():(S2?"#f5f5f5":"rgba(255,255,255,.08)")};display:flex;align-items:center;justify-content:center;font-size:18px;">${done?"✅":act.emoji}</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:13px;color:${done?(S2?"#7b1fa2":"rgba(255,255,255,.35)"):txtColor()};text-decoration:${done?"line-through":"none"};">${act.label}</div>
+        <div style="font-size:11px;font-weight:700;color:#2ecc71;margin-top:1px;">1 ponto</div>
+      </div>
+      <div style="width:22px;height:22px;border-radius:999px;border:2px solid ${done?accent():"rgba(150,150,150,.3)"};background:${done?accentGrad():"transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        ${done?`<span style="color:#fff;font-size:11px;font-weight:900;">✓</span>`:""}
+      </div>
+    </button>`;
+  }).join("")}
+
+  <!-- bônus -->
+  <div style="background:${S2?"rgba(103,58,183,.08)":"rgba(71,118,230,.12)"};border-radius:14px;padding:12px 14px;border:1px dashed ${S2?"rgba(103,58,183,.4)":"rgba(142,84,233,.5)"};">
+    <div style="font-size:11px;font-weight:800;color:#8e54e9;margin-bottom:8px;">⚡ MISSÃO BÔNUS DO DIA</div>
+    ${!todayBonus
+      ?`<button onclick="generateBonus()" style="width:100%;padding:9px;border-radius:11px;border:none;background:linear-gradient(135deg,#4776e6,#8e54e9);color:#fff;font-weight:800;font-size:13px;">Sortear bônus surpresa ⚡</button>`
+      :`<div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:26px;">${todayBonus.emoji}</div>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:13px;color:${todayBonus.done?txtSub():txtColor()};text-decoration:${todayBonus.done?"line-through":"none"};">${todayBonus.label}</div>
+            <div style="font-size:11px;font-weight:700;color:#8e54e9;">+${todayBonus.pts} pontos</div>
+          </div>
+          ${todayBonus.done?`<span style="font-size:20px;">✅</span>`:`<button onclick="completeBonus()" style="background:linear-gradient(135deg,#4776e6,#8e54e9);color:#fff;border:none;border-radius:10px;padding:7px 12px;font-weight:800;font-size:12px;">Feito!</button>`}
+        </div>`
+    }
+  </div>`;
+}
+
+function buildWeek(){
+  const wk = getWeekDays();
+  const S2 = isSophia();
+  const comp = completed();
+  const actsArr = acts();
+
+  return `
+  <div style="background:${sectionBg()};border-radius:16px;padding:13px;margin-bottom:11px;">
+    <div style="font-weight:900;font-size:13px;color:${S2?"#666":"rgba(255,255,255,.65)"};margin-bottom:10px;">Dias desta semana</div>
+    <div style="display:flex;gap:4px;">
+      ${wk.map(d=>{
+        const dc=comp[d.key]||{};
+        const allDone=actsArr.every(a=>dc[a.id]);
+        const cnt=actsArr.filter(a=>dc[a.id]).length;
+        return `
+        <button onclick="gotoDate('${d.key}')" style="flex:1;text-align:center;background:none;border:none;padding:0;cursor:pointer;">
+          <div style="font-size:10px;font-weight:700;color:${txtSub()};margin-bottom:4px;">${d.label}</div>
+          <div style="height:46px;border-radius:10px;background:${allDone?positiveGrad():d.key===todayKey()?(S2?"linear-gradient(135deg,#fff9c4,#ffe0b2)":"rgba(255,210,0,.1)"):(S2?"#f0f0f0":"rgba(255,255,255,.05)")};display:flex;align-items:center;justify-content:center;font-size:15px;">
+            ${allDone?"🌟":d.key===todayKey()?"⏳":"○"}
+          </div>
+          <div style="font-size:9px;font-weight:700;color:${allDone?"#2ecc71":txtSub()};margin-top:3px;">${allDone?"✓":`${cnt}/${actsArr.length}`}</div>
+        </button>`;
+      }).join("")}
+    </div>
+  </div>
+
+  <div style="font-weight:900;font-size:12px;color:${txtSub()};margin-bottom:8px;">📋 Atividades por dia</div>
+  ${actsArr.map(act=>{
+    const cnt=wk.filter(d=>(comp[d.key]||{})[act.id]).length;
+    const perfect=cnt===7;
+    return `
+    <div style="background:${perfect?(S2?"linear-gradient(135deg,#fff9c4,#ffe0b2)":"rgba(255,210,0,.08)"):sectionBg()};border-radius:12px;padding:9px 12px;margin-bottom:7px;display:flex;align-items:center;gap:9px;border:${perfect?`1px solid ${S2?"#ffd700":"rgba(255,210,0,.5)"}`:S2?"none":"1px solid rgba(255,255,255,.06)"};">
+      <span style="font-size:17px;">${act.emoji}</span>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:12px;color:${txtColor()};margin-bottom:4px;">${act.label}</div>
+        <div style="display:flex;gap:3px;">
+          ${wk.map(d=>`<div class="week-dot" style="background:${(comp[d.key]||{})[act.id]?accentGrad():(S2?"#eee":"rgba(255,255,255,.08)")};">${(comp[d.key]||{})[act.id]?"✓":""}</div>`).join("")}
+        </div>
+      </div>
+      <div style="text-align:center;min-width:36px;font-weight:900;font-size:13px;color:${perfect?(S2?"#e65100":"#ffd200"):accent()};">${cnt}/7</div>
+    </div>`;
+  }).join("")}`;
+}
+
+function buildHistory(){
+  const last30=getLast30();
+  const comp=completed();
+  const actsArr=acts();
+  const S2=isSophia();
+  const chartData=last30.map(k=>({key:k,label:fmtDate(k),total:calcDay(comp[k]||{},actsArr).total}));
+  const maxVal=Math.max(...chartData.map(d=>d.total),1);
+  const recent=[...last30].reverse().filter(d=>calcDay(comp[d]||{},actsArr).total>0||d===todayKey()).slice(0,15);
+
+  return `
+  <div style="font-weight:900;font-size:13px;color:${txtSub()};margin-bottom:10px;">📈 Últimos 30 dias</div>
+  <div style="background:${sectionBg()};border-radius:16px;padding:13px;margin-bottom:14px;">
+    <div style="display:flex;align-items:flex-end;gap:2px;height:90px;overflow-x:auto;padding-bottom:2px;">
+      ${chartData.map(d=>{
+        const h=Math.max(d.total>0?(d.total/maxVal)*70:0,d.total>0?4:0);
+        const isSel=d.key===state.selDate;
+        const isToday2=d.key===todayKey();
+        return `
+        <div class="chart-bar" onclick="gotoDate('${d.key}')">
+          <div style="font-size:8px;font-weight:800;color:#2ecc71;min-height:10px;">${d.total||""}</div>
+          <div class="chart-fill" style="height:${h}px;background:${isSel?accentGrad():isToday2?(S2?"linear-gradient(180deg,#f48fb1,#ce93d8)":"linear-gradient(180deg,#e94560,#0f3460)"):(S2?"linear-gradient(180deg,#e1bee7,#ce93d8)":"linear-gradient(180deg,#4776e6,#8e54e9)")};">
+          </div>
+          <div style="font-size:7px;font-weight:700;color:${txtSub()};transform:rotate(-40deg);transform-origin:top left;margin-top:4px;width:16px;">${d.label}</div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>
+
+  <div style="font-weight:900;font-size:12px;color:${txtSub()};margin-bottom:8px;">📋 Detalhe por dia</div>
+  ${recent.map(dateKey=>{
+    const dc=comp[dateKey]||{};
+    const calc=calcDay(dc,actsArr);
+    const allDone=actsArr.every(a=>dc[a.id])&&actsArr.length>0;
+    const isSel=dateKey===state.selDate;
+    return `
+    <button class="hist-item card-btn" onclick="gotoDate('${dateKey}')"
+      style="background:${isSel?accentGrad():allDone?(S2?"linear-gradient(135deg,#fff9c4,#ffe0b2)":"rgba(255,210,0,.08)"):sectionBg()};border:${isSel?"none":allDone?`1px solid ${S2?"#ffd700":"rgba(255,210,0,.4)"}`:S2?"none":"1px solid rgba(255,255,255,.06)"};">
+      <div style="font-size:20px;">${allDone?"🌟":calc.total>0?"📝":"○"}</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:12px;color:${isSel?"#fff":txtColor()};">${dateKey===todayKey()?"Hoje":fmtDate(dateKey)}</div>
+        <div style="font-size:11px;font-weight:700;color:${isSel?"rgba(255,255,255,.7)":txtSub()};">${actsArr.filter(a=>dc[a.id]).length}/${actsArr.length} tarefas</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:900;font-size:14px;color:${isSel?"#fff":"#2ecc71"};">${calc.total} pts</div>
+        ${calc.bonus>0?`<div style="font-size:10px;font-weight:700;color:${isSel?"rgba(255,255,255,.7)":accent()};">+${calc.bonus} bônus</div>`:""}
+      </div>
+      <span style="font-size:13px;color:${isSel?"rgba(255,255,255,.6)":txtSub()};">›</span>
+    </button>`;
+  }).join("")}`;
+}
+
+function buildPremios(){
+  const tp=total();
+  const S2=isSophia();
+  const rews=rewards();
+  const red=state[k()+"_redeemed"];
+
+  return `
+  <div style="background:${sectionBg()};border-radius:16px;padding:13px 16px;margin-bottom:13px;display:flex;align-items:center;gap:13px;">
+    <span style="font-size:34px;">⭐</span>
+    <div>
+      <div style="font-weight:700;font-size:11px;color:${txtSub()};">Pontos disponíveis</div>
+      <div style="font-weight:900;font-size:30px;color:${S2?"#c44dff":"#ffd200"};line-height:1;">${tp}</div>
+    </div>
+  </div>
+
+  <div style="font-weight:900;font-size:12px;color:${txtSub()};margin-bottom:9px;">🎁 Resgatar prêmios</div>
+  ${rews.map(r=>{
+    const can=tp>=r.cost;
+    const pct=Math.min((tp/r.cost)*100,100);
+    return `
+    <div style="background:${can?(S2?"rgba(255,255,255,.9)":"rgba(56,239,125,.07)"):sectionBg()};border-radius:14px;padding:12px 14px;margin-bottom:9px;border:${can?(S2?"1px solid #f8bbd0":"1px solid #38ef7d"):S2?"none":"1px solid rgba(255,255,255,.06)"};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${can?0:7}px;">
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:14px;color:${can?txtColor():txtSub()};">${r.emoji} ${r.label}</div>
+          <div style="font-weight:700;font-size:11px;color:${can?accent():txtSub()};margin-top:1px;">${r.cost} pontos</div>
+        </div>
+        <button onclick="redeemReward(${r.id})" ${!can?"disabled":""} style="background:${can?accentGrad():(S2?"#eee":"rgba(255,255,255,.07)")};color:${can?"#fff":txtSub()};border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:12px;opacity:${can?1:.7};">Resgatar</button>
+      </div>
+      ${!can?`
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:${txtSub()};margin-bottom:3px;"><span>Progresso</span><span>${tp}/${r.cost}</span></div>
+        <div style="background:${S2?"#f0f0f0":"rgba(255,255,255,.08)"};border-radius:999px;height:6px;overflow:hidden;">
+          <div style="height:100%;border-radius:999px;background:${accentGrad()};width:${pct}%;"></div>
+        </div>`:""}
+    </div>`;
+  }).join("")}
+
+  ${red.length>0?`
+  <div style="font-weight:900;font-size:12px;color:${txtSub()};margin-bottom:8px;margin-top:4px;">🏅 Histórico de resgates</div>
+  ${[...red].reverse().slice(0,8).map(r=>`
+    <div style="background:${sectionBg()};border-radius:11px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px;">
+      <span>🎁</span>
+      <span style="flex:1;font-weight:700;font-size:12px;color:${txtColor()};">${r.label}</span>
+      <span style="color:${txtSub()};font-size:10px;">${fmtDate(r.date)}</span>
+    </div>`).join("")}`:""}`;
+}
+
+// ─── OVERLAYS ─────────────────────────────────────────────────────────────────
+let pinCallback = null;
+
+function showPin(cb){
+  pinCallback = cb;
+  let pinVal = "";
+  let errTimer = null;
+  const S2 = isSophia();
+
+  const ov = document.createElement("div");
+  ov.className="overlay";
+  ov.innerHTML=`
+    <div class="modal">
+      <div style="font-size:30px;margin-bottom:6px;">🔒</div>
+      <div style="font-weight:900;font-size:16px;color:#333;margin-bottom:3px;">Área da Mamãe</div>
+      <div style="font-size:12px;color:#aaa;margin-bottom:4px;">PIN de 4 dígitos</div>
+      <div class="pin-dots">
+        ${[0,1,2,3].map(i=>`<div class="pin-dot" id="pd${i}"></div>`).join("")}
+      </div>
+      <div class="keypad">
+        ${[1,2,3,4,5,6,7,8,9,"","0","⌫"].map(d=>`
+          <button class="keypad-btn${d===""?" empty":""}" ${d===""?"disabled":""} onclick="pinPress('${d}')">${d}</button>`).join("")}
+      </div>
+      <button onclick="closePin()" style="background:none;border:none;color:#aaa;font-size:13px;font-weight:700;">Cancelar</button>
+    </div>`;
+  document.body.appendChild(ov);
+
+  window.pinPress = function(d){
+    if(d==="⌫"){ pinVal=pinVal.slice(0,-1); updateDots(); return; }
+    if(pinVal.length>=4) return;
+    pinVal+=d;
+    updateDots();
+    if(pinVal.length===4) checkPin();
+  };
+  window.closePin = function(){
+    ov.remove();
+    pinCallback=null;
+  };
+  function updateDots(){
+    [0,1,2,3].forEach(i=>{
+      const dot=el("pd"+i);
+      dot.classList.toggle("filled",pinVal.length>i);
+    });
+  }
+  function checkPin(){
+    const savedPin = S.get("app_pin","1234");
+    if(pinVal===savedPin){
+      state.unlocked=true;
+      ov.remove();
+      if(pinCallback){ pinCallback(); pinCallback=null; }
+    } else {
+      [0,1,2,3].forEach(i=>el("pd"+i).classList.add("error"));
+      setTimeout(()=>{
+        [0,1,2,3].forEach(i=>el("pd"+i).classList.remove("error","filled"));
+        pinVal="";
+      },700);
+    }
+  }
+}
+
+function requireUnlocked(cb){
+  if(state.unlocked) cb();
+  else showPin(cb);
+}
+
+function celebrate(emoji,text,bg){
+  const div=document.createElement("div");
+  div.className="celebration";
+  div.innerHTML=`<div class="celebration-box" style="background:${bg};box-shadow:0 8px 40px rgba(0,0,0,.3);">
+    <div style="font-size:48px;">${emoji}</div>
+    <div style="color:#fff;font-weight:900;font-size:18px;margin-top:4px;">${text}</div>
+  </div>`;
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(),1800);
+}
+
+function openDatePicker(){
+  const S2=isSophia();
+  const last30=getLast30().reverse();
+  const ov=document.createElement("div");
+  ov.className="overlay bottom";
+  ov.innerHTML=`
+    <div class="bottom-sheet">
+      <div style="padding:16px 16px 8px;font-weight:900;font-size:15px;color:#333;text-align:center;">📅 Selecionar data</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 12px;">
+        ${last30.map(d=>{
+          const isToday2=d===todayKey();
+          const isSel=d===state.selDate;
+          return `<button onclick="selectDate('${d}')" style="padding:8px 4px;border-radius:10px;border:none;font-weight:800;font-size:11px;background:${isSel?accentGrad():isToday2?"#f3e5f5":"#f5f5f5"};color:${isSel?"#fff":isToday2?S2?"#c44dff":"#e94560":"#555"};">${isToday2?"Hoje":fmtDate(d)}</button>`;
+        }).join("")}
+      </div>
+      <div style="padding:12px 12px 0;">
+        <button onclick="closeDatePicker()" style="width:100%;padding:11px;border-radius:12px;border:none;font-weight:800;font-size:13px;background:#eee;color:#666;">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  window.selectDate=function(d){ state.selDate=d; closeDatePicker(); render(); };
+  window.closeDatePicker=function(){ ov.remove(); };
+}
+
+function openAdmin(){
+  requireUnlocked(()=>{
+    const S2=isSophia();
+    const prefix=k();
+    const ov=document.createElement("div");
+    ov.className="overlay bottom";
+    function buildAdminContent(){
+      return `
+      <div class="bottom-sheet" id="admin-sheet">
+        <div style="background:${accentGrad()};padding:16px 20px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="color:#fff;font-weight:900;font-size:15px;">⚙️ Admin — ${S2?"Sophia":"Raphael"}</div>
+          <button onclick="closeAdmin()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;color:#fff;padding:4px 10px;font-weight:900;font-size:16px;">✕</button>
+        </div>
+        <div style="padding:14px;">
+
+          <!-- Pontos extras -->
+          <div style="background:#f9f9f9;border-radius:12px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:800;font-size:12px;color:#555;margin-bottom:8px;">⭐ Ajustar pontos totais</div>
+            <div style="display:flex;gap:8px;">
+              <input id="adj-pts" type="number" placeholder="Ex: 50 ou -20" class="inp" style="flex:1;"/>
+              <button onclick="adjustPoints()" style="background:${accentGrad()};color:#fff;border:none;border-radius:10px;padding:9px 14px;font-weight:800;font-size:12px;">+/-</button>
+            </div>
+            <div style="font-size:11px;color:#aaa;margin-top:5px;">Total atual: <b>${total()}</b> pts — use negativo para subtrair</div>
+          </div>
+
+          <!-- Tarefas -->
+          <div style="font-weight:800;font-size:12px;color:#555;margin-bottom:8px;">📋 Tarefas (${acts().length})</div>
+          ${acts().map(a=>`
+            <div class="admin-item">
+              <span style="font-size:18px;">${a.emoji}</span>
+              <span style="flex:1;font-weight:700;font-size:13px;color:#333;">${a.label}</span>
+              <button class="del-btn" onclick="removeAct('${a.id}')">✕</button>
+            </div>`).join("")}
+          <div style="background:#f3e5f5;border-radius:12px;padding:12px;margin-bottom:14px;">
+            <div style="font-weight:800;font-size:11px;color:${accent()};margin-bottom:7px;">+ Nova tarefa</div>
+            <div style="display:flex;gap:8px;margin-bottom:7px;">
+              <input id="new-emoji" value="⭐" class="inp" style="width:54px;text-align:center;font-size:18px;" maxlength="2"/>
+              <input id="new-task" placeholder="Nome da tarefa" class="inp"/>
+            </div>
+            <button onclick="addAct()" style="width:100%;padding:9px;border-radius:11px;border:none;background:${accentGrad()};color:#fff;font-weight:800;font-size:13px;">Adicionar</button>
+          </div>
+
+          <!-- Prêmios -->
+          <div style="font-weight:800;font-size:12px;color:#555;margin-bottom:8px;">🎁 Prêmios (${rewards().length})</div>
+          ${rewards().map(r=>`
+            <div class="admin-item">
+              <span style="font-size:18px;">${r.emoji}</span>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:13px;color:#333;">${r.label}</div>
+                <div style="font-size:11px;color:${accent()};font-weight:700;">${r.cost} pts</div>
+              </div>
+              <button class="del-btn" onclick="removeReward2(${r.id})">✕</button>
+            </div>`).join("")}
+          <div style="background:#f3e5f5;border-radius:12px;padding:12px;margin-bottom:14px;">
+            <div style="font-weight:800;font-size:11px;color:${accent()};margin-bottom:7px;">+ Novo prêmio</div>
+            <div style="display:flex;gap:8px;margin-bottom:7px;">
+              <input id="new-remoji" value="🎁" class="inp" style="width:54px;text-align:center;font-size:18px;" maxlength="2"/>
+              <input id="new-reward" placeholder="Nome do prêmio" class="inp"/>
+            </div>
+            <input id="new-cost" type="number" placeholder="Custo em pontos" class="inp" style="margin-bottom:7px;"/>
+            <button onclick="addReward2()" style="width:100%;padding:9px;border-radius:11px;border:none;background:${accentGrad()};color:#fff;font-weight:800;font-size:13px;">Adicionar</button>
+          </div>
+
+          <!-- PIN -->
+          <div style="background:#f9f9f9;border-radius:12px;padding:12px;">
+            <div style="font-weight:800;font-size:12px;color:#555;margin-bottom:8px;">🔒 Alterar PIN</div>
+            <div style="display:flex;gap:8px;">
+              <input id="new-pin" type="number" placeholder="Novo PIN (4 dígitos)" class="inp" style="flex:1;"/>
+              <button onclick="savePin()" style="background:${accentGrad()};color:#fff;border:none;border-radius:10px;padding:9px 14px;font-weight:800;font-size:12px;">Salvar</button>
+            </div>
+            <div id="pin-msg" style="font-size:11px;color:${accent()};margin-top:5px;text-align:center;"></div>
+          </div>
+
+        </div>
+      </div>`;
+    }
+
+    ov.innerHTML=buildAdminContent();
+    document.body.appendChild(ov);
+
+    window.closeAdmin=()=>{ ov.remove(); render(); };
+    window.adjustPoints=()=>{
+      const v=parseInt(el("adj-pts").value||"0");
+      if(isNaN(v))return;
+      state[k()+"_total"]=Math.max(0,total()+v);
+      save();
+      el("adj-pts").value="";
+      ov.innerHTML=buildAdminContent();
+    };
+    window.removeAct=(id)=>{
+      state[k()+"_acts"]=acts().filter(a=>a.id!==id);
+      save(); ov.innerHTML=buildAdminContent();
+    };
+    window.addAct=()=>{
+      const emoji=el("new-emoji").value||"⭐";
+      const label=el("new-task").value.trim();
+      if(!label)return;
+      state[k()+"_acts"]=[...acts(),{id:"t_"+Date.now(),emoji,label}];
+      save(); ov.innerHTML=buildAdminContent();
+    };
+    window.removeReward2=(id)=>{
+      state[k()+"_rewards"]=rewards().filter(r=>r.id!==id);
+      save(); ov.innerHTML=buildAdminContent();
+    };
+    window.addReward2=()=>{
+      const emoji=el("new-remoji").value||"🎁";
+      const label=el("new-reward").value.trim();
+      const cost=parseInt(el("new-cost").value||"0");
+      if(!label||!cost)return;
+      state[k()+"_rewards"]=[...rewards(),{id:Date.now(),emoji,label,cost}];
+      save(); ov.innerHTML=buildAdminContent();
+    };
+    window.savePin=()=>{
+      const p=el("new-pin").value;
+      if(!/^\d{4}$/.test(p)){ el("pin-msg").textContent="PIN deve ter 4 dígitos"; return; }
+      S.set("app_pin",p);
+      el("pin-msg").textContent="✅ PIN alterado com sucesso!";
+      el("new-pin").value="";
+    };
+  });
+}
+
+function editMsg(){
+  requireUnlocked(()=>{
+    const S2=isSophia();
+    const ov=document.createElement("div");
+    ov.className="overlay";
+    ov.innerHTML=`
+      <div class="modal" style="${!S2?"background:#1a1a2e;":""}">
+        <div style="font-weight:900;font-size:15px;color:${txtColor()};margin-bottom:12px;">💌 Recado da mamãe</div>
+        <textarea id="msg-inp" rows="3" style="width:100%;border-radius:10px;border:1.5px solid ${accent()};padding:8px;font-size:13px;font-weight:700;font-family:Nunito,sans-serif;background:${S2?"#fff":"rgba(255,255,255,.08)"};color:${txtColor()};resize:none;outline:none;">${msg()}</textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button onclick="saveMsgModal()" style="flex:1;padding:10px;border-radius:10px;border:none;background:${accentGrad()};color:#fff;font-weight:900;font-size:13px;">Salvar</button>
+          <button onclick="this.closest('.overlay').remove()" style="padding:10px 14px;border-radius:10px;border:none;background:#eee;color:#666;font-weight:800;font-size:13px;">✕</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    window.saveMsgModal=()=>{
+      state[k()+"_msg"]=el("msg-inp").value;
+      save(); ov.remove(); render();
+    };
+  });
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function toggleAct(actId){
+  requireUnlocked(()=>{
+    const prefix=k();
+    const dc={...(state[prefix+"_completed"][state.selDate]||{})};
+    const was=!!dc[actId];
+    dc[actId]=!was;
+    const oldCalc=calcDay(state[prefix+"_completed"][state.selDate]||{},acts());
+    state[prefix+"_completed"]={...state[prefix+"_completed"],[state.selDate]:dc};
+    const newCalc=calcDay(dc,acts());
+    const delta=newCalc.total-oldCalc.total;
+    state[prefix+"_total"]=Math.max(0,state[prefix+"_total"]+delta);
+    save();
+    if(!was) celebrate("⭐","Atividade concluída!","linear-gradient(135deg,#43e97b,#38f9d7)");
+    render();
+  });
+}
+
+function generateBonus(){
+  requireUnlocked(()=>{
+    const pick=BONUS_POOL[Math.floor(Math.random()*BONUS_POOL.length)];
+    state[k()+"_bonus"]={...bonusTasks(),[state.selDate]:{...pick,done:false}};
+    save(); render();
+  });
+}
+
+function completeBonus(){
+  requireUnlocked(()=>{
+    const task=bonusTasks()[state.selDate];
+    if(!task||task.done)return;
+    state[k()+"_bonus"]={...bonusTasks(),[state.selDate]:{...task,done:true}};
+    state[k()+"_total"]=state[k()+"_total"]+task.pts;
+    save();
+    celebrate("⚡","Missão bônus concluída!","linear-gradient(135deg,#4776e6,#8e54e9)");
+    render();
+  });
+}
+
+function redeemReward(id){
+  requireUnlocked(()=>{
+    const r=rewards().find(x=>x.id===id);
+    if(!r||total()<r.cost)return;
+    state[k()+"_total"]=state[k()+"_total"]-r.cost;
+    state[k()+"_redeemed"]=[...state[k()+"_redeemed"],{...r,date:todayKey()}];
+    save();
+    celebrate("🎁","Prêmio resgatado!","linear-gradient(135deg,#43e97b,#38f9d7)");
+    render();
+  });
+}
+
+function switchChild(c){ state.child=c; state.tab="hoje"; state.selDate=todayKey(); render(); }
+function switchTab(t){ state.tab=t; render(); }
+function gotoDate(d){ state.selDate=d; state.tab="hoje"; render(); }
+function toggleLock(){
+  if(state.unlocked){ state.unlocked=false; render(); }
+  else showPin(()=>render());
+}
+
+function attachEvents(){}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
